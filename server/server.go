@@ -8,21 +8,30 @@ import (
     "io"
     "io/ioutil"
     "flag"
+    "time"
 
     "github.com/golang/glog"
     "github.com/gorilla/mux"
 )
 
+// curl --form upload=@README.md localhost:9001/api/v1/dataset_file
 
 func main() {
     flag.Parse()
 
     router := mux.NewRouter().StrictSlash(true)
     router.HandleFunc("/api/v1/ping", Ping)
-    router.HandleFunc("/api/v1/dataset_file", UploadDatasetFile)
-    router.HandleFunc("/api/v1/compute_request/builtin/{builtinJobId}/{datasetFileId}", BuiltinJob)
+    router.HandleFunc("/api/v1/{userId}/dataset_file", UploadDatasetFile)
+    router.HandleFunc("/api/v1/{userId}/list_dataset_files", ListDatasetFiles)
+    router.HandleFunc("/api/v1/{userId}/compute_request/builtin/{builtinJobId}/{datasetFileId}", BuiltinJob)
 
     glog.Info(http.ListenAndServe(":9001", router))
+}
+
+type apiRequest struct{
+    Status  string `json:"Status"`
+    Msg     string `json:"Msg"`
+    Payload interface{} `json:"Payload"`
 }
 
 
@@ -57,6 +66,47 @@ func BuiltinJob(w http.ResponseWriter, r *http.Request) {
 
 func Ping(w http.ResponseWriter, r *http.Request) {
     http.Redirect(w, r, `http://www.google.bg`, http.StatusMovedPermanently)
+}
+
+
+type datasetFileInfo struct {
+  Name      string
+  Size	   int64
+  ModTime  time.Time
+}
+
+func ListDatasetFiles(w http.ResponseWriter, r *http.Request) {
+    if r.Method != "GET"{
+	WriteResp(w, 405, `Wrong method!`)
+	return
+    }
+
+    vars := mux.Vars(r)
+
+    path := os.Getenv("UPLOAD_DATASET_FILE_DIR") + vars[`userId`]
+    glog.Info("ListDatasetFiles: List path: " + path)
+
+    files, err := ioutil.ReadDir(path)
+    if err != nil {
+	w.Write([]byte(`{"status":"error", "message":"` + err.Error()  + `"}`))
+	glog.Error(err)
+    }
+
+    var avaliableDatasetFiles []datasetFileInfo
+    for _, file := range files {
+	newFile := datasetFileInfo{Name: file.Name(), Size: file.Size(), ModTime: file.ModTime()}
+	avaliableDatasetFiles = append(avaliableDatasetFiles, newFile)
+    }
+
+    bytes, err1 := json.Marshal(&apiRequest{Status: "ok", Msg: `ok`, Payload: &avaliableDatasetFiles})
+    if err1 != nil {
+	glog.Error(err1)
+	return
+    }
+
+    glog.Info( string(bytes) )
+    glog.Info(avaliableDatasetFiles)
+    w.Write(bytes)
 }
 
 func UploadDatasetFile(w http.ResponseWriter, r *http.Request) {
