@@ -14,8 +14,9 @@ import (
     "github.com/gorilla/mux"
 )
 
-// curl --form upload=@README.md localhost:9001/api/v1/dataset_file
+// curl --form upload=@README.md localhost:9001/api/v1/zl1/dataset_file
 // curl localhost:9001/api/v1/zl1/list_dataset_files
+// curl localhost:9001/api/v1/zl1/compute_request/builtin/min/c
 
 func main() {
     flag.Parse()
@@ -50,13 +51,42 @@ func BuiltinJob(w http.ResponseWriter, r *http.Request) {
     }
     vars := mux.Vars(r)
 
+    datasetFileBytes, err := ioutil.ReadFile(os.Getenv("UPLOAD_DATASET_FILE_DIR") + `/` + vars[`userId`]  + `/` + vars[`datasetFileId`])
+
+    if err != nil {
+	glog.Error(err)
+	WriteResp(w, 400, `Bad Request!`)
+	return
+    }
+
+    var dataset []int
+    err = json.Unmarshal(datasetFileBytes, &dataset)
+    if err != nil {
+	glog.Error(err)
+	WriteResp(w, 400, `Dataset file contains invalid format/data !`)
+	return
+    }
+
+    //TODO fix memory allocation
+    var matchingElements []int
     if vars[`builtinJobId`] == `min` {
-	GetMax()
+	matchingElements = GetMax(dataset)
+
     } else if vars[`builtinJobId`] == `max`  {
-	GetMin()
+	matchingElements = GetMin(dataset)
     } else {
 	WriteResp(w, 400, `Bad builtinJobId!`)
     }
+
+
+    bytes, err := json.Marshal(&apiRequest{Status: "ok", Msg: `ok`, Payload: matchingElements})
+    if err != nil {
+	glog.Error(err)
+	WriteResp(w, 500, `Internal error. Try again later!`)
+	return
+    }
+
+    w.Write(bytes)
 }
 
 
@@ -110,6 +140,8 @@ func UploadDatasetFile(w http.ResponseWriter, r *http.Request) {
 	return
     }
 
+    vars := mux.Vars(r)
+
     var err error
     defer func() {
 	if nil != err {
@@ -137,7 +169,7 @@ func UploadDatasetFile(w http.ResponseWriter, r *http.Request) {
 	    }
 	    // open destination  
 	    var outfile *os.File
-	    outfile, err = os.Create(os.Getenv("UPLOAD_DATASET_FILE_DIR") + hdr.Filename)
+	    outfile, err = os.Create(os.Getenv("UPLOAD_DATASET_FILE_DIR") + `/` +vars[`userId`] + `/` + hdr.Filename)
 	    if err != nil {
 		glog.Error(err)
 		WriteResp(w, 500, `Internal error. Try again later!`)
@@ -156,11 +188,10 @@ func UploadDatasetFile(w http.ResponseWriter, r *http.Request) {
 					hdr.Filename,
 				    }
 
-	    bytes, err1 := json.Marshal(&apiRequest{Status: "ok", Msg: `ok`, Payload: datasetFileApiStruct})
-	    if err1 != nil {
+	    bytes, err := json.Marshal(&apiRequest{Status: "ok", Msg: `ok`, Payload: datasetFileApiStruct})
+	    if err != nil {
 		glog.Error(err)
 		WriteResp(w, 500, `Internal error. Try again later!`)
-		glog.Error(err1)
 		return
 	    }
 	    w.Write(bytes)
