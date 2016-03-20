@@ -44,30 +44,8 @@ type datasetFileInfo struct {
 
 
 func BuiltinJob(w http.ResponseWriter, r *http.Request) {
-    vars := mux.Vars(r)
-
-    bytes, err := ioutil.ReadFile( os.Getenv("UPLOAD_DATASET_FILE_DIR") + vars[`datasetFileId`])
-    // File doesn't exist
-    // Doesn't have read permissions
-    if err != nil {
-	glog.Error("Error when oppening file: ", err) //no such file or directory
-    }
-    y := [][]int{}
-    err  = json.Unmarshal(bytes, &y)
-    if err != nil {
-	//cannot unmarshal bad data
-	glog.Error(err)
-    }
-
-    if vars[`builtinJobId`] == `get_max_value` {
-	for _, ele := range y {
-	    for _, ele1 := range ele {
-		glog.Info("ELEMENT: ", ele1)
-		//w.Write()
-	    }
-	}
-
-    }
+    //vars := mux.Vars(r)
+    //BuiltinMethodsHandler 
 }
 
 
@@ -90,8 +68,6 @@ func ListDatasetFiles(w http.ResponseWriter, r *http.Request) {
     glog.Info("ListDatasetFiles: List path: " + path)
 
     _, err := os.Stat(path)
-
-
     files, err := ioutil.ReadDir(path)
     if err != nil {
 	WriteResp(w, 400, `Bad Request!`)
@@ -159,8 +135,19 @@ func UploadDatasetFile(w http.ResponseWriter, r *http.Request) {
 		WriteResp(w, 500, `Internal error. Try again later!`)
 		return
 	    }
-	    //TODO Fix
-	    w.Write([]byte(`{"status":"ok", "resource_id":"` + hdr.Filename  + `"}`))
+	    datasetFileApiStruct := struct {
+					DatasetFileId string
+				    } {
+					hdr.Filename,
+				    }
+
+	    bytes, err1 := json.Marshal(&apiRequest{Status: "ok", Msg: `ok`, Payload: datasetFileApiStruct})
+	    if err1 != nil {
+		WriteResp(w, 500, `Internal error. Try again later!`)
+		glog.Error(err1)
+		return
+	    }
+	    w.Write(bytes)
 	}
     }
 }
