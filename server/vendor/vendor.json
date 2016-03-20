@@ -1,0 +1,25 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "tKMSOCOue78dHOP9PY0aSI79+vw=",
+			"path": "github.com/golang/glog",
+			"revision": "fca8c8854093a154ff1eb580aae10276ad6b1b5f",
+			"revisionTime": "2015-08-01T08:52:21+10:00"
+		},
+		{
+			"checksumSHA1": "iIUYZyoanCQQTUaWsu8b+iOSPt4=",
+			"path": "github.com/gorilla/context",
+			"revision": "14f550f51af52180c2eefed15e5fd18d63c0a64a",
+			"revisionTime": "2014-06-04T09:11:50-07:00"
+		},
+		{
+			"checksumSHA1": "XX7Ae9Qxahgb4HjMWHnAE29js6w=",
+			"path": "github.com/gorilla/mux",
+			"revision": "4b8fbc56f3b2400a7c7ea3dba9b3539787c486b6",
+			"revisionTime": "2014-08-11T07:46:53-07:00"
+		}
+	],
+	"rootPath": "github.com/IamBc/adaas/server"
+}
