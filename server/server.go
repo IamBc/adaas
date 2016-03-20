@@ -21,13 +21,15 @@ import (
 func main() {
     flag.Parse()
 
+    go http.ListenAndServe(":9012", http.FileServer(http.Dir(os.Getenv("WEBUI_DIR"))))
+
     router := mux.NewRouter().StrictSlash(true)
     router.HandleFunc("/api/v1/ping", Ping)
     router.HandleFunc("/api/v1/{userId}/dataset_file", UploadDatasetFile)
     router.HandleFunc("/api/v1/{userId}/list_dataset_files", ListDatasetFiles)
     router.HandleFunc("/api/v1/{userId}/compute_request/builtin/{builtinJobId}/{datasetFileId}", BuiltinJob)
 
-    glog.Info(http.ListenAndServe(":9001", router))
+    glog.Info(http.ListenAndServe(":9011", router))
 }
 
 type apiRequest struct{
