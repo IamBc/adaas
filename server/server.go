@@ -73,7 +73,7 @@ func BuiltinJob(w http.ResponseWriter, r *http.Request) {
 
 
 func Ping(w http.ResponseWriter, r *http.Request) {
-    http.Redirect(w, r, `http://www.google.bg`, http.StatusMovedPermanently)
+    w.Write([]byte(`Pong!`))
 }
 
 
@@ -89,9 +89,12 @@ func ListDatasetFiles(w http.ResponseWriter, r *http.Request) {
     path := os.Getenv("UPLOAD_DATASET_FILE_DIR") + vars[`userId`]
     glog.Info("ListDatasetFiles: List path: " + path)
 
+    _, err := os.Stat(path)
+
+
     files, err := ioutil.ReadDir(path)
     if err != nil {
-	w.Write([]byte(`{"status":"error", "message":"` + err.Error()  + `"}`))
+	WriteResp(w, 400, `Bad Request!`)
 	glog.Error(err)
     }
 
@@ -103,6 +106,7 @@ func ListDatasetFiles(w http.ResponseWriter, r *http.Request) {
 
     bytes, err1 := json.Marshal(&apiRequest{Status: "ok", Msg: `ok`, Payload: &avaliableDatasetFiles})
     if err1 != nil {
+	WriteResp(w, 500, `Internal error. Try again later!`)
 	glog.Error(err1)
 	return
     }
@@ -129,7 +133,8 @@ func UploadDatasetFile(w http.ResponseWriter, r *http.Request) {
     // max bytes in mem at a time  
     const _24K = (1 << 20) * 24
     err = r.ParseMultipartForm(_24K)
-    if nil != err {
+    if err != nil {
+	WriteResp(w, 500, `Internal error. Try again later!`)
 	return
     }
     for _, fheaders := range r.MultipartForm.File {
@@ -137,20 +142,24 @@ func UploadDatasetFile(w http.ResponseWriter, r *http.Request) {
 	    // open uploaded  
 	    var infile multipart.File
 	    infile, err = hdr.Open()
-	    if nil != err {
-		 return
+	    if err != nil {
+		WriteResp(w, 500, `Internal error. Try again later!`)
+		return
 	    }
 	    // open destination  
 	    var outfile *os.File
 	    outfile, err = os.Create(os.Getenv("UPLOAD_DATASET_FILE_DIR") + hdr.Filename)
-	    if nil != err {
-		 return
+	    if err != nil {
+		WriteResp(w, 500, `Internal error. Try again later!`)
+		return
 	    }
 	    var written int64
 	    written, err = io.Copy(outfile, infile)
-	    if nil != err || 0 == written {
-		 return
+	    if err != nil || 0 == written {
+		WriteResp(w, 500, `Internal error. Try again later!`)
+		return
 	    }
+	    //TODO Fix
 	    w.Write([]byte(`{"status":"ok", "resource_id":"` + hdr.Filename  + `"}`))
 	}
     }
