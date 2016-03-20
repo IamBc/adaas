@@ -15,6 +15,7 @@ import (
 )
 
 // curl --form upload=@README.md localhost:9001/api/v1/dataset_file
+// curl localhost:9001/api/v1/zl1/list_dataset_files
 
 func main() {
     flag.Parse()
@@ -32,6 +33,13 @@ type apiRequest struct{
     Status  string `json:"Status"`
     Msg     string `json:"Msg"`
     Payload interface{} `json:"Payload"`
+}
+
+
+type datasetFileInfo struct {
+  Name     string
+  Size	   int64
+  ModTime  time.Time
 }
 
 
@@ -69,11 +77,6 @@ func Ping(w http.ResponseWriter, r *http.Request) {
 }
 
 
-type datasetFileInfo struct {
-  Name      string
-  Size	   int64
-  ModTime  time.Time
-}
 
 func ListDatasetFiles(w http.ResponseWriter, r *http.Request) {
     if r.Method != "GET"{
@@ -108,6 +111,7 @@ func ListDatasetFiles(w http.ResponseWriter, r *http.Request) {
     glog.Info(avaliableDatasetFiles)
     w.Write(bytes)
 }
+
 
 func UploadDatasetFile(w http.ResponseWriter, r *http.Request) {
     if r.Method != "POST"{
