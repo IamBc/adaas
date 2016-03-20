@@ -44,8 +44,19 @@ type datasetFileInfo struct {
 
 
 func BuiltinJob(w http.ResponseWriter, r *http.Request) {
-    //vars := mux.Vars(r)
-    //BuiltinMethodsHandler 
+    if r.Method != "GET"{
+	WriteResp(w, 405, `Wrong method!`)
+	return
+    }
+    vars := mux.Vars(r)
+
+    if vars[`builtinJobId`] == `min` {
+	GetMax()
+    } else if vars[`builtinJobId`] == `max`  {
+	GetMin()
+    } else {
+	WriteResp(w, 400, `Bad builtinJobId!`)
+    }
 }
 
 
@@ -80,10 +91,10 @@ func ListDatasetFiles(w http.ResponseWriter, r *http.Request) {
 	avaliableDatasetFiles = append(avaliableDatasetFiles, newFile)
     }
 
-    bytes, err1 := json.Marshal(&apiRequest{Status: "ok", Msg: `ok`, Payload: &avaliableDatasetFiles})
-    if err1 != nil {
+    bytes, err := json.Marshal(&apiRequest{Status: "ok", Msg: `ok`, Payload: &avaliableDatasetFiles})
+    if err != nil {
 	WriteResp(w, 500, `Internal error. Try again later!`)
-	glog.Error(err1)
+	glog.Error(err)
 	return
     }
 
@@ -110,6 +121,7 @@ func UploadDatasetFile(w http.ResponseWriter, r *http.Request) {
     const _24K = (1 << 20) * 24
     err = r.ParseMultipartForm(_24K)
     if err != nil {
+	glog.Error(err)
 	WriteResp(w, 500, `Internal error. Try again later!`)
 	return
     }
@@ -119,6 +131,7 @@ func UploadDatasetFile(w http.ResponseWriter, r *http.Request) {
 	    var infile multipart.File
 	    infile, err = hdr.Open()
 	    if err != nil {
+		glog.Error(err)
 		WriteResp(w, 500, `Internal error. Try again later!`)
 		return
 	    }
@@ -126,12 +139,14 @@ func UploadDatasetFile(w http.ResponseWriter, r *http.Request) {
 	    var outfile *os.File
 	    outfile, err = os.Create(os.Getenv("UPLOAD_DATASET_FILE_DIR") + hdr.Filename)
 	    if err != nil {
+		glog.Error(err)
 		WriteResp(w, 500, `Internal error. Try again later!`)
 		return
 	    }
 	    var written int64
 	    written, err = io.Copy(outfile, infile)
 	    if err != nil || 0 == written {
+		glog.Error(err)
 		WriteResp(w, 500, `Internal error. Try again later!`)
 		return
 	    }
@@ -143,6 +158,7 @@ func UploadDatasetFile(w http.ResponseWriter, r *http.Request) {
 
 	    bytes, err1 := json.Marshal(&apiRequest{Status: "ok", Msg: `ok`, Payload: datasetFileApiStruct})
 	    if err1 != nil {
+		glog.Error(err)
 		WriteResp(w, 500, `Internal error. Try again later!`)
 		glog.Error(err1)
 		return
