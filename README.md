@@ -1,9 +1,5 @@
-# adaas
-Anomaly detection as a service
+Anomaly Detection as A Service
 
-(future) features:
-- RESTFUL API with JSON
-- Builtin commands
-- Executing custom scripts
-- Searching for custom patterns
-- Web UI that ties it all together
+## Synopsis
+RESTful API with a web interface which offers anomaly detection as a service.
+
