@@ -12,3 +12,14 @@ func GetMax(dataset []int) []int {
     return []int{ dataset[0] }
 }
 
+//TODO:
+//Gt: Greater Than; Lt: Less than
+//func CountGtThreshold 
+//func GetGtThreshold
+//func CountLtThreshold
+//func GetLtThreshold
+//func CountGtAvg
+//func GetGtAvgThreshold
+//func CountLtAvgThreshold
+//func GetLtAvgThreshold
+// How to isolate custom scripts ? 
